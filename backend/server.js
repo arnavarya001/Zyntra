@@ -204,9 +204,10 @@ app.post('/api/auth/register', async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+    const ageInt = parseInt(age) || null;
     const sql = `INSERT INTO users (handle, name, age, bio, gender, preference, password) VALUES (?, ?, ?, ?, ?, ?, ?)`;
     
-    db.run(sql, [handle, name, age, bio, gender, preference, hashedPassword], function (err) {
+    db.run(sql, [handle, name, ageInt, bio, gender, preference, hashedPassword], function (err) {
       if (err) {
         if (err.message.includes('UNIQUE constraint failed')) {
           return res.status(409).json({ error: 'Handle is already taken.' });
@@ -218,7 +219,7 @@ app.post('/api/auth/register', async (req, res) => {
       res.status(201).json({ 
         message: 'User created successfully', 
         token, 
-        user: { id: this.lastID, handle, name, age, bio, gender, preference } 
+        user: { id: this.lastID, handle, name, age: ageInt, bio, gender, preference } 
       });
     });
   } catch (err) {
