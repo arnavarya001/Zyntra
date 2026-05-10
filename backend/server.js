@@ -51,11 +51,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'zyntra-super-secret-key-123';
 
 // Initialize Database (PostgreSQL for production, SQLite for local)
 let db;
+let pool;
 const isProduction = process.env.DATABASE_URL;
 
 if (isProduction) {
   console.log('Production detected! Connecting to PostgreSQL...');
-  const pool = new Pool({
+  pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
@@ -181,15 +182,8 @@ const initDB = async () => {
 };
 
 if (!isProduction) {
-  const sqlite3Module = await import('sqlite3');
-  const sqlite3 = sqlite3Module.default.verbose();
-  db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'), async (err) => {
-    if (err) console.error('Database connection error:', err);
-    else {
-      console.log('Connected to SQLite database.');
-      await initDB();
-    }
-  });
+  // SQLite init handled in its constructor callback
+  await initDB();
 } else {
   await initDB();
 }
