@@ -54,6 +54,7 @@ let db;
 const isProduction = process.env.DATABASE_URL;
 
 if (isProduction) {
+  console.log('Production detected! Using PostgreSQL...');
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -63,11 +64,9 @@ if (isProduction) {
     console.error('Unexpected error on idle client', err);
   });
 
-  // Wrap pool for simple query usage similar to sqlite3
   db = {
     run: (sql, params, cb) => {
       let finalSql = sql.replace(/\?/g, (_, i) => `$${i + 1}`);
-      // PostgreSQL needs RETURNING id to get the last inserted ID
       if (finalSql.trim().toUpperCase().startsWith('INSERT')) {
         finalSql += ' RETURNING id';
       }
@@ -99,14 +98,20 @@ if (isProduction) {
     },
     serialize: (fn) => fn()
   };
-  console.log('Connected to PostgreSQL database.');
 } else {
-  const sqlite3Module = await import('sqlite3');
-  const sqlite3 = sqlite3Module.default.verbose();
-  db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'), (err) => {
-    if (err) console.error('Database connection error:', err);
-    else console.log('Connected to SQLite database.');
-  });
+  console.log('Local environment! Loading SQLite...');
+  // Only load sqlite3 if we are NOT on Render (to prevent build errors)
+  if (!process.env.RENDER) {
+    const sqlite3Module = await import('sqlite3');
+    const sqlite3 = sqlite3Module.default.verbose();
+    db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'), (err) => {
+      if (err) console.error('Database connection error:', err);
+      else console.log('Connected to SQLite database.');
+    });
+  } else {
+    console.error('CRITICAL: Running on Render but DATABASE_URL is missing!');
+    process.exit(1);
+  }
 }
 
 // Create tables
