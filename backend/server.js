@@ -59,22 +59,43 @@ if (isProduction) {
     ssl: { rejectUnauthorized: false }
   });
   
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err);
+  });
+
   // Wrap pool for simple query usage similar to sqlite3
   db = {
     run: (sql, params, cb) => {
-      pool.query(sql.replace(/\?/g, (val, i) => `$${i + 1}`), params)
-        .then(res => cb && cb(null, res))
-        .catch(err => cb && cb(err));
+      let finalSql = sql.replace(/\?/g, (_, i) => `$${i + 1}`);
+      // PostgreSQL needs RETURNING id to get the last inserted ID
+      if (finalSql.trim().toUpperCase().startsWith('INSERT')) {
+        finalSql += ' RETURNING id';
+      }
+      pool.query(finalSql, params)
+        .then(res => {
+          const lastID = res.rows && res.rows[0] ? res.rows[0].id : null;
+          if (cb) cb.call({ lastID }, null);
+        })
+        .catch(err => {
+          console.error('DB Run Error:', err.message);
+          if (cb) cb(err);
+        });
     },
     get: (sql, params, cb) => {
-      pool.query(sql.replace(/\?/g, (val, i) => `$${i + 1}`), params)
+      pool.query(sql.replace(/\?/g, (_, i) => `$${i + 1}`), params)
         .then(res => cb && cb(null, res.rows[0]))
-        .catch(err => cb && cb(err));
+        .catch(err => {
+          console.error('DB Get Error:', err.message);
+          if (cb) cb(err);
+        });
     },
     all: (sql, params, cb) => {
-      pool.query(sql.replace(/\?/g, (val, i) => `$${i + 1}`), params)
+      pool.query(sql.replace(/\?/g, (_, i) => `$${i + 1}`), params)
         .then(res => cb && cb(null, res.rows))
-        .catch(err => cb && cb(err));
+        .catch(err => {
+          console.error('DB All Error:', err.message);
+          if (cb) cb(err);
+        });
     },
     serialize: (fn) => fn()
   };
@@ -260,7 +281,11 @@ app.post('/api/interact', (req, res) => {
     const userId = decoded.id;
 
     // Record the interaction
-    db.run(`INSERT OR IGNORE INTO interactions (user_id, target_id, type) VALUES (?, ?, ?)`, [userId, target_id, type], function(err) {
+    const interactSql = isProduction 
+      ? `INSERT INTO interactions (user_id, target_id, type) VALUES (?, ?, ?) ON CONFLICT (user_id, target_id) DO NOTHING`
+      : `INSERT OR IGNORE INTO interactions (user_id, target_id, type) VALUES (?, ?, ?)`;
+
+    db.run(interactSql, [userId, target_id, type], function(err) {
       if (err) return res.status(500).json({ error: 'Database error.' });
 
       if (type === 'like') {
@@ -271,7 +296,11 @@ app.post('/api/interact', (req, res) => {
             const user1 = Math.min(userId, target_id);
             const user2 = Math.max(userId, target_id);
             
-            db.run(`INSERT OR IGNORE INTO matches (user1_id, user2_id) VALUES (?, ?)`, [user1, user2], (err) => {
+            const matchSql = isProduction
+              ? `INSERT INTO matches (user1_id, user2_id) VALUES (?, ?) ON CONFLICT (user1_id, user2_id) DO NOTHING`
+              : `INSERT OR IGNORE INTO matches (user1_id, user2_id) VALUES (?, ?)`;
+
+            db.run(matchSql, [user1, user2], (err) => {
               if (err) return res.status(500).json({ error: 'Failed to create match.' });
               return res.json({ success: true, match: true });
             });
