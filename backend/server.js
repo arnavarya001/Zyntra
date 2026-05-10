@@ -54,14 +54,19 @@ let db;
 const isProduction = process.env.DATABASE_URL;
 
 if (isProduction) {
-  console.log('Production detected! Using PostgreSQL...');
+  console.log('Production detected! Connecting to PostgreSQL...');
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
   
-  pool.on('error', (err) => {
-    console.error('Unexpected error on idle client', err);
+  pool.connect((err, client, release) => {
+    if (err) {
+      console.error('CRITICAL: Database connection failed!', err.message);
+    } else {
+      console.log('PostgreSQL connection successful!');
+      release();
+    }
   });
 
   db = {
@@ -70,6 +75,7 @@ if (isProduction) {
       if (finalSql.trim().toUpperCase().startsWith('INSERT')) {
         finalSql += ' RETURNING id';
       }
+      console.log('DB RUN:', finalSql, params);
       pool.query(finalSql, params)
         .then(res => {
           const lastID = res.rows && res.rows[0] ? res.rows[0].id : null;
@@ -81,7 +87,9 @@ if (isProduction) {
         });
     },
     get: (sql, params, cb) => {
-      pool.query(sql.replace(/\?/g, (_, i) => `$${i + 1}`), params)
+      let finalSql = sql.replace(/\?/g, (_, i) => `$${i + 1}`);
+      console.log('DB GET:', finalSql, params);
+      pool.query(finalSql, params)
         .then(res => cb && cb(null, res.rows[0]))
         .catch(err => {
           console.error('DB Get Error:', err.message);
@@ -89,7 +97,9 @@ if (isProduction) {
         });
     },
     all: (sql, params, cb) => {
-      pool.query(sql.replace(/\?/g, (_, i) => `$${i + 1}`), params)
+      let finalSql = sql.replace(/\?/g, (_, i) => `$${i + 1}`);
+      console.log('DB ALL:', finalSql, params);
+      pool.query(finalSql, params)
         .then(res => cb && cb(null, res.rows))
         .catch(err => {
           console.error('DB All Error:', err.message);
