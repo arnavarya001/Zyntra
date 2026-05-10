@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ProfileCard from '../components/ProfileCard';
 import type { UserProfile } from '../components/ProfileCard';
 import { useAuth } from '../context/AuthContext';
+import API_URL from '../config';
 import './Discover.css';
 
 const Requests: React.FC = () => {
@@ -14,7 +15,7 @@ const Requests: React.FC = () => {
     const fetchRequests = async () => {
       if (!token) return;
       try {
-        const res = await fetch('/api/requests', {
+        const res = await fetch(`${API_URL}/api/requests`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch requests');
@@ -27,7 +28,7 @@ const Requests: React.FC = () => {
           handle: u.handle,
           bio: u.bio || "No bio provided.",
           photos: u.profile_pictures && u.profile_pictures.length > 0 
-            ? u.profile_pictures.map((p: string) => `/uploads/${p}`)
+            ? u.profile_pictures.map((p: string) => `${API_URL}/uploads/${p}`)
             : [`https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80&random=${u.id}`],
           followers: `${Math.floor(Math.random() * 10) + 1}k`
         }));
@@ -45,7 +46,7 @@ const Requests: React.FC = () => {
 
   const handleMatch = async (id: string) => {
     try {
-      const res = await fetch('/api/interact', {
+      const res = await fetch(`${API_URL}/api/interact`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -66,7 +67,7 @@ const Requests: React.FC = () => {
 
   const handleSkip = async (id: string) => {
     try {
-      await fetch('/api/interact', {
+      await fetch(`${API_URL}/api/interact`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

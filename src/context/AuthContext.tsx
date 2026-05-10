@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, ReactNode, useContext } from 'react';
+import API_URL from '../config';
 
 interface User {
   id: number;
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (token) {
       // Verify token and fetch user
-      fetch('/api/auth/me', {
+      fetch(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => {

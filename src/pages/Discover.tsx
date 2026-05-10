@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ProfileCard from '../components/ProfileCard';
 import type { UserProfile } from '../components/ProfileCard';
 import { useAuth } from '../context/AuthContext';
+import API_URL from '../config';
 import './Discover.css';
 
 const Discover: React.FC = () => {
@@ -14,24 +15,26 @@ const Discover: React.FC = () => {
     const fetchUsers = async () => {
       if (!token) return;
       try {
-        const res = await fetch('/api/users', {
+        const res = await fetch(`${API_URL}/api/users`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch users');
         const data = await res.json();
         
-        const formattedProfiles: UserProfile[] = data.users.map((u: any) => ({
-          id: u.id.toString(),
-          name: u.name,
-          age: u.age || 20,
-          handle: '', // Hidden by API anyway, keep blank
-          bio: u.bio || "No bio provided.",
-          photos: [
-            `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80&random=${u.id}`,
-            `https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80&random=${u.id}`
-          ],
-          followers: `${Math.floor(Math.random() * 10) + 1}k`
-        }));
+        const formattedProfiles: UserProfile[] = data.users.map((u: any) => {
+          const photos = u.profile_pictures ? JSON.parse(u.profile_pictures) : [];
+          return {
+            id: u.id.toString(),
+            name: u.name,
+            age: u.age || 20,
+            handle: '', 
+            bio: u.bio || "No bio provided.",
+            photos: photos.length > 0 
+              ? photos.map((p: string) => `${API_URL}/uploads/${p}`)
+              : [`https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80&random=${u.id}`],
+            followers: `${Math.floor(Math.random() * 10) + 1}k`
+          };
+        });
 
         setProfiles(formattedProfiles);
       } catch (err) {
@@ -46,7 +49,7 @@ const Discover: React.FC = () => {
 
   const interact = async (id: string, type: 'like' | 'skip') => {
     try {
-      const res = await fetch('/api/interact', {
+      const res = await fetch(`${API_URL}/api/interact`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, MoreVertical, Send, Phone, Video, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import API_URL from '../config';
 import './Messages.css';
 
 interface Match {
@@ -26,15 +27,20 @@ const Messages: React.FC = () => {
     const fetchMatches = async () => {
       if (!token) return;
       try {
-        const res = await fetch('/api/matches', {
+        const res = await fetch(`${API_URL}/api/matches`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
         if (data.matches) {
-          const formatted = data.matches.map((m: any) => ({
-            ...m,
-            photo: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80&random=${m.id}`
-          }));
+          const formatted = data.matches.map((m: any) => {
+            const photos = m.profile_pictures ? JSON.parse(m.profile_pictures) : [];
+            return {
+              ...m,
+              photo: photos.length > 0 
+                ? `${API_URL}/uploads/${photos[0]}`
+                : `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80&random=${m.id}`
+            };
+          });
           setMatches(formatted);
         }
       } catch (err) {
@@ -51,7 +57,7 @@ const Messages: React.FC = () => {
     const fetchMessages = async () => {
       if (!token || !activeMatch) return;
       try {
-        const res = await fetch(`/api/messages/${activeMatch.id}`, {
+        const res = await fetch(`${API_URL}/api/messages/${activeMatch.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -94,7 +100,7 @@ const Messages: React.FC = () => {
     setMessages(prev => [...prev, tempMsg]);
 
     try {
-      await fetch('/api/messages', {
+      await fetch(`${API_URL}/api/messages`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

@@ -231,7 +231,7 @@ app.get('/api/users', (req, res) => {
 
       // We only return id, name, age, bio. We do NOT return the handle!
       const sql = `
-        SELECT id, name, age, bio 
+        SELECT id, name, age, bio, profile_pictures 
         FROM users 
         WHERE id != ? 
         AND id NOT IN (SELECT target_id FROM interactions WHERE user_id = ?)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Camera, Save, Edit2, Trash2, Plus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import API_URL from '../config';
 import './Profile.css';
 
 const Profile: React.FC = () => {
@@ -27,7 +28,7 @@ const Profile: React.FC = () => {
   const fetchProfile = async () => {
     if (!token) return;
     try {
-      const res = await fetch('/api/profile', {
+      const res = await fetch(`${API_URL}/api/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -53,7 +54,7 @@ const Profile: React.FC = () => {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch('/api/profile/update', {
+      const res = await fetch(`${API_URL}/api/profile/update`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ const Profile: React.FC = () => {
     formData.append('photo', file);
 
     try {
-      const res = await fetch('/api/profile/upload-photo', {
+      const res = await fetch(`${API_URL}/api/profile/upload-photo`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -93,7 +94,7 @@ const Profile: React.FC = () => {
 
   const handleDeletePhoto = async (filename: string) => {
     try {
-      await fetch('/api/profile/delete-photo', {
+      await fetch(`${API_URL}/api/profile/delete-photo`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ const Profile: React.FC = () => {
             <div className="photo-grid">
               {profile.profile_pictures.map((photo: string, index: number) => (
                 <div key={index} className="photo-item brutal-box">
-                  <img src={`/uploads/${photo}`} alt={`Profile ${index}`} />
+                  <img src={`${API_URL}/uploads/${photo}`} alt={`Profile ${index}`} />
                   {isEditing && (
                     <button className="delete-photo" onClick={() => handleDeletePhoto(photo)}>
                       <Trash2 size={16} />
