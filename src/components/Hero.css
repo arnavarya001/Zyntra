@@ -1,0 +1,118 @@
+.hero-section {
+  position: relative;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.hero-background {
+  display: none;
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 900px;
+  z-index: 1;
+  background: var(--bg-secondary);
+  padding: 60px 40px;
+  border: var(--border-width) solid var(--border-color);
+  box-shadow: var(--hard-shadow-lg);
+  position: relative;
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--accent-green);
+  border: var(--border-width) solid var(--border-color);
+  margin-bottom: 32px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  box-shadow: 4px 4px 0px var(--border-color);
+  transform: rotate(-2deg);
+}
+
+.hero-title {
+  font-size: 5rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 24px;
+  letter-spacing: -2px;
+  text-transform: uppercase;
+}
+
+.hero-title span {
+  background: var(--accent-pink);
+  padding: 0 16px;
+  display: inline-block;
+  transform: rotate(1deg);
+  border: var(--border-width) solid var(--border-color);
+  box-shadow: 6px 6px 0px var(--border-color);
+  margin-top: 12px;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.connect-btn {
+  font-size: 1.25rem;
+  padding: 20px 40px;
+}
+
+.arrow-icon {
+  transition: transform var(--transition-fast);
+}
+
+.connect-btn:hover .arrow-icon {
+  transform: translateX(6px);
+}
+
+.social-proof {
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.avatars-group {
+  display: flex;
+}
+
+.avatars-group img {
+  width: 48px;
+  height: 48px;
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  margin-left: -16px;
+  object-fit: cover;
+  box-shadow: 2px 2px 0px var(--border-color);
+}
+
+.avatars-group img:first-child {
+  margin-left: 0;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 3rem;
+  }
+  .hero-content {
+    padding: 32px 20px;
+  }
+}

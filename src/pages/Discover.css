@@ -1,0 +1,42 @@
+.discover-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background-image: linear-gradient(var(--border-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: -1px -1px;
+}
+
+.card-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.no-more-profiles {
+  text-align: center;
+  padding: 48px;
+  max-width: 500px;
+  background: var(--accent-yellow);
+  border: var(--border-width) solid var(--border-color);
+  box-shadow: var(--hard-shadow-lg);
+}
+
+.no-more-profiles h2 {
+  font-size: 2.5rem;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.no-more-profiles p {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+}

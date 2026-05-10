@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+backend/database.sqlite
+backend/uploads/*
+!backend/uploads/.gitkeep
+.DS_Store

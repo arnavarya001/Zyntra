@@ -1,0 +1,190 @@
+.profile-page {
+  padding: 40px 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.profile-container {
+  background: var(--bg-primary);
+  padding: 40px;
+  min-height: 600px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 4px solid var(--border-color);
+}
+
+.profile-title {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  text-transform: uppercase;
+}
+
+.btn-icon {
+  background: var(--accent-yellow);
+  border: 3px solid var(--border-color);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 4px 4px 0px var(--border-color);
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--border-color);
+}
+
+.btn-icon.active {
+  background: var(--accent-pink);
+  color: white;
+}
+
+.error-msg {
+  background: #ff4d4d;
+  color: white;
+  padding: 15px;
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+}
+
+.success-msg {
+  background: var(--accent-green);
+  color: black;
+  padding: 15px;
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+  font-weight: bold;
+}
+
+.profile-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+@media (max-width: 768px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Photos Section */
+.photos-section h3 {
+  font-family: var(--font-display);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  font-size: 1.5rem;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.photo-item {
+  aspect-ratio: 1;
+  position: relative;
+  overflow: hidden;
+  background: #eee;
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.delete-photo {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: var(--accent-pink);
+  border: 2px solid black;
+  color: white;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.add-photo-btn {
+  aspect-ratio: 1;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-style: dashed;
+  transition: all 0.2s;
+}
+
+.add-photo-btn:hover {
+  background: var(--accent-yellow);
+}
+
+.add-photo-btn span {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  margin-top: 8px;
+  font-weight: bold;
+}
+
+/* Details Section */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.profile-view {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.view-item label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #666;
+}
+
+.view-item p {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  word-break: break-word;
+}
+
+.bio-text {
+  font-family: var(--font-mono) !important;
+  font-size: 1.1rem !important;
+  line-height: 1.5;
+}
+
+.view-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}

@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  /* Neo-Brutalist Theme Variables */
+  --bg-primary: #f4f4f0;
+  --bg-secondary: #ffffff;
+  
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --text-inverse: #ffffff;
+  
+  /* Vibrant Accents */
+  --accent-pink: #ff00ff;
+  --accent-green: #00ff00;
+  --accent-yellow: #ffff00;
+  --accent-blue: #00ffff;
+  --accent-purple: #8a2be2;
+  
+  --border-width: 3px;
+  --border-color: #000000;
+  --hard-shadow: 4px 4px 0px var(--border-color);
+  --hard-shadow-lg: 8px 8px 0px var(--border-color);
+  --hard-shadow-hover: 6px 6px 0px var(--border-color);
+  
+  --radius-sm: 0px; /* Brutalist usually avoids large border radii */
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  
+  --transition-fast: 0.15s ease-out;
+  
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-mono);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: var(--font-display);
+  cursor: pointer;
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+/* Utilities */
+.brutal-box {
+  background: var(--bg-secondary);
+  border: var(--border-width) solid var(--border-color);
+  box-shadow: var(--hard-shadow);
+  border-radius: var(--radius-md);
+}
+
+.btn-primary {
+  background: var(--accent-pink);
+  color: var(--text-primary);
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-radius: 0;
+  box-shadow: var(--hard-shadow);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--hard-shadow-hover);
+  background: var(--accent-yellow);
+}
+
+.btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--border-color);
+}
+
+.btn-secondary {
+  background: var(--accent-blue);
+  color: var(--text-primary);
+  padding: 12px 24px;
+  font-weight: 700;
+  border-radius: 0;
+  box-shadow: var(--hard-shadow);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--hard-shadow-hover);
+  background: var(--accent-green);
+}
+
+.btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--border-color);
+}
+
+/* Animations */
+@keyframes popIn {
+  0% { transform: scale(0.9) translate(10px, 10px); opacity: 0; box-shadow: 0 0 0 transparent; }
+  100% { transform: scale(1) translate(0, 0); opacity: 1; box-shadow: var(--hard-shadow); }
+}
+
+.animate-pop-in {
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-fade-in {
+  opacity: 1;
+}
