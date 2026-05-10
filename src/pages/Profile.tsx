@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Camera, Save, Edit2, Trash2, Plus, X, Globe, Loader2 } from 'lucide-react';
+import { Save, Edit2, Trash2, Plus, X, Globe, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import './Profile.css';
 
 const Profile: React.FC = () => {
-  const { token, user: authUser } = useAuth();
+  const { token } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);

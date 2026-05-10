@@ -54,7 +54,7 @@ const Messages: React.FC = () => {
 
   // Fetch messages for active match (Polling every 3 seconds)
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
 
     const fetchMessages = async () => {
       if (!token || !activeMatch) return;

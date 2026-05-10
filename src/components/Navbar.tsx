@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Camera, MessageCircle, Heart, LogOut } from 'lucide-react';
+import { MessageCircle, Heart, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
