@@ -125,67 +125,74 @@ if (isProduction) {
 }
 
 // Create tables
-db.serialize(() => {
+const initDB = async () => {
   const autoInc = isProduction ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
-  
-  console.log('Initializing tables...');
+  console.log('Initializing tables sequentially...');
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id ${autoInc},
-      handle TEXT UNIQUE NOT NULL,
-      name TEXT NOT NULL,
-      age INTEGER,
-      bio TEXT,
-      gender TEXT,
-      preference TEXT,
-      password TEXT NOT NULL,
-      profile_pictures TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `, [], (err) => {
-    if (err) console.error('Error creating users table:', err.message);
-    else console.log('Users table ready.');
-  });
+  try {
+    const tables = [
+      `CREATE TABLE IF NOT EXISTS users (
+        id ${autoInc},
+        handle TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        age INTEGER,
+        bio TEXT,
+        gender TEXT,
+        preference TEXT,
+        password TEXT NOT NULL,
+        profile_pictures TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+      `CREATE TABLE IF NOT EXISTS interactions (
+        user_id INTEGER,
+        target_id INTEGER,
+        type TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, target_id)
+      )`,
+      `CREATE TABLE IF NOT EXISTS matches (
+        user1_id INTEGER,
+        user2_id INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user1_id, user2_id)
+      )`,
+      `CREATE TABLE IF NOT EXISTS messages (
+        id ${autoInc},
+        sender_id INTEGER NOT NULL,
+        receiver_id INTEGER NOT NULL,
+        text TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    ];
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS interactions (
-      user_id INTEGER,
-      target_id INTEGER,
-      type TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (user_id, target_id)
-    )
-  `, [], (err) => {
-    if (err) console.error('Error creating interactions table:', err.message);
-    else console.log('Interactions table ready.');
-  });
+    for (const sql of tables) {
+      if (isProduction) {
+        await pool.query(sql);
+      } else {
+        await new Promise((resolve, reject) => {
+          db.run(sql, (err) => err ? reject(err) : resolve());
+        });
+      }
+    }
+    console.log('All tables ready.');
+  } catch (err) {
+    console.error('Error initializing database:', err.message);
+  }
+};
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS matches (
-      user1_id INTEGER,
-      user2_id INTEGER,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (user1_id, user2_id)
-    )
-  `, [], (err) => {
-    if (err) console.error('Error creating matches table:', err.message);
-    else console.log('Matches table ready.');
+if (!isProduction) {
+  const sqlite3Module = await import('sqlite3');
+  const sqlite3 = sqlite3Module.default.verbose();
+  db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'), async (err) => {
+    if (err) console.error('Database connection error:', err);
+    else {
+      console.log('Connected to SQLite database.');
+      await initDB();
+    }
   });
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS messages (
-      id ${autoInc},
-      sender_id INTEGER NOT NULL,
-      receiver_id INTEGER NOT NULL,
-      text TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `, [], (err) => {
-    if (err) console.error('Error creating messages table:', err.message);
-    else console.log('Messages table ready.');
-  });
-});
+} else {
+  await initDB();
+}
 
 // Register Endpoint
 app.post('/api/auth/register', async (req, res) => {
