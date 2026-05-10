@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import sqlite3 from 'sqlite3';
+// import sqlite3 from 'sqlite3'; (Removed to avoid Render library errors)
 import { fileURLToPath } from 'url';
 import path from 'path';
 import multer from 'multer';
@@ -101,11 +101,12 @@ if (isProduction) {
   };
   console.log('Connected to PostgreSQL database.');
 } else {
-  const sqlite = new sqlite3.Database(path.join(__dirname, 'database.sqlite'), (err) => {
+  const sqlite3Module = await import('sqlite3');
+  const sqlite3 = sqlite3Module.default.verbose();
+  db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'), (err) => {
     if (err) console.error('Database connection error:', err);
     else console.log('Connected to SQLite database.');
   });
-  db = sqlite;
 }
 
 // Create tables
