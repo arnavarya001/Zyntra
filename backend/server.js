@@ -118,6 +118,8 @@ if (isProduction) {
 db.serialize(() => {
   const autoInc = isProduction ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
   
+  console.log('Initializing tables...');
+
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id ${autoInc},
@@ -128,20 +130,26 @@ db.serialize(() => {
       gender TEXT,
       preference TEXT,
       password TEXT NOT NULL,
-      profile_pictures TEXT, -- JSON array of filenames
+      profile_pictures TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-  `);
+  `, [], (err) => {
+    if (err) console.error('Error creating users table:', err.message);
+    else console.log('Users table ready.');
+  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS interactions (
       user_id INTEGER,
       target_id INTEGER,
-      type TEXT NOT NULL, -- 'like' or 'skip'
+      type TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (user_id, target_id)
     )
-  `);
+  `, [], (err) => {
+    if (err) console.error('Error creating interactions table:', err.message);
+    else console.log('Interactions table ready.');
+  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS matches (
@@ -150,7 +158,10 @@ db.serialize(() => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (user1_id, user2_id)
     )
-  `);
+  `, [], (err) => {
+    if (err) console.error('Error creating matches table:', err.message);
+    else console.log('Matches table ready.');
+  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS messages (
@@ -160,7 +171,10 @@ db.serialize(() => {
       text TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-  `);
+  `, [], (err) => {
+    if (err) console.error('Error creating messages table:', err.message);
+    else console.log('Messages table ready.');
+  });
 });
 
 // Register Endpoint
