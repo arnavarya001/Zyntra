@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, MoreVertical, Send, Phone, Video, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
@@ -14,6 +15,7 @@ interface Match {
 }
 
 const Messages: React.FC = () => {
+  const navigate = useNavigate();
   const [matches, setMatches] = useState<Match[]>([]);
   const [activeMatch, setActiveMatch] = useState<Match | null>(null);
   const [messageText, setMessageText] = useState('');
@@ -155,17 +157,17 @@ const Messages: React.FC = () => {
       <div className={`chat-area ${activeMatch ? 'active-on-mobile' : ''}`}>
         {activeMatch ? (
           <>
-            <div className="chat-header">
-              <div className="chat-user-info">
-                <button className="mobile-back-btn" onClick={() => setActiveMatch(null)}>
-                  <ChevronLeft size={24} />
-                </button>
-                <img src={activeMatch.photo} alt={activeMatch.name} className="chat-avatar" />
-                <div className="chat-user-details">
-                  <h3>{activeMatch.name}</h3>
-                  <div className="ig-reveal">@{activeMatch.handle}</div>
+              <div className="chat-header">
+                <div className="chat-user-info" onClick={() => navigate(`/user/${activeMatch.id}`)} style={{ cursor: 'pointer' }}>
+                  <button className="mobile-back-btn" onClick={(e) => { e.stopPropagation(); setActiveMatch(null); }}>
+                    <ChevronLeft size={24} />
+                  </button>
+                  <img src={activeMatch.photo} alt={activeMatch.name} className="chat-avatar" />
+                  <div className="chat-user-details">
+                    <h3>{activeMatch.name}</h3>
+                    <div className="ig-reveal">@{activeMatch.handle}</div>
+                  </div>
                 </div>
-              </div>
               <div className="chat-actions">
                 <button className="icon-btn" onClick={startCall}><Phone size={20} /></button>
                 <button className="icon-btn" onClick={startCall}><Video size={20} /></button>

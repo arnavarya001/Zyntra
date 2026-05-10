@@ -93,3 +93,21 @@
   text-decoration: underline;
   text-decoration-thickness: 2px;
 }
+
+@media (max-width: 768px) {
+  .auth-card {
+    padding: 24px 16px;
+    margin: 10px;
+  }
+  .input-row {
+    flex-direction: column;
+    gap: 24px;
+  }
+  .auth-title {
+    font-size: 1.8rem;
+    margin-bottom: 24px;
+  }
+  .auth-page {
+    padding: 20px 10px;
+  }
+}

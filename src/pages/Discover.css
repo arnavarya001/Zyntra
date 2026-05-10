@@ -40,3 +40,14 @@
   color: var(--text-primary);
   line-height: 1.6;
 }
+
+@media (max-width: 768px) {
+  .discover-page {
+    padding: 20px 12px;
+    background-size: 30px 30px;
+  }
+  .no-more-profiles {
+    padding: 32px 16px;
+    margin: 10px;
+  }
+}

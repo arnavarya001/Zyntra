@@ -110,9 +110,27 @@
 
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 3rem;
+    font-size: 2.8rem;
+    line-height: 1.1;
+  }
+  .hero-title span {
+    padding: 0 8px;
+    font-size: 2.5rem;
+    box-shadow: 4px 4px 0px var(--border-color);
   }
   .hero-content {
-    padding: 32px 20px;
+    padding: 32px 16px;
+    margin: 10px;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+    margin-bottom: 30px;
+  }
+  .connect-btn {
+    padding: 16px 32px;
+    width: 100%;
+  }
+  .hero-section {
+    min-height: calc(100vh - 60px);
   }
 }

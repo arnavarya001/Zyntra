@@ -439,6 +439,28 @@ app.get('/api/profile', (req, res) => {
   });
 });
 
+// Get Public Profile (for viewing matches)
+app.get('/api/user/:id', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'No token provided.' });
+
+  const targetId = parseInt(req.params.id);
+  if (isNaN(targetId)) return res.status(400).json({ error: 'Invalid user ID.' });
+
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ error: 'Invalid token.' });
+
+    db.get(`SELECT id, handle, name, age, bio, gender, profile_pictures FROM users WHERE id = ?`, [targetId], (err, user) => {
+      if (err || !user) return res.status(404).json({ error: 'User not found.' });
+      res.json({ user: {
+        ...user,
+        profile_pictures: user.profile_pictures ? JSON.parse(user.profile_pictures) : []
+      }});
+    });
+  });
+});
+
 // Update Profile
 app.post('/api/profile/update', (req, res) => {
   const authHeader = req.headers.authorization;
@@ -506,6 +528,42 @@ app.post('/api/profile/delete-photo', (req, res) => {
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
         res.json({ success: true, photos });
+      });
+    });
+  });
+});
+
+// Simulate Instagram Sync
+app.post('/api/profile/sync-instagram', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'No token provided.' });
+
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ error: 'Invalid token.' });
+
+    // In a real app, we would use the Instagram API here.
+    // For now, we simulate by adding 6 high-quality "Instagram-style" photos.
+    const mockPhotos = [
+      `https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=600&q=80&rand=${Math.random()}`,
+      `https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&q=80&rand=${Math.random()}`,
+      `https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80&rand=${Math.random()}`,
+      `https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80&rand=${Math.random()}`,
+      `https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80&rand=${Math.random()}`,
+      `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&q=80&rand=${Math.random()}`
+    ];
+
+    db.get(`SELECT profile_pictures FROM users WHERE id = ?`, [decoded.id], (err, row) => {
+      if (err) return res.status(500).json({ error: 'Database error.' });
+      if (!row) return res.status(404).json({ error: 'User not found.' });
+      
+      let photos = row.profile_pictures ? JSON.parse(row.profile_pictures) : [];
+      // Combine existing with new, limit to 6
+      const updatedPhotos = [...new Set([...photos, ...mockPhotos])].slice(0, 6);
+
+      db.run(`UPDATE users SET profile_pictures = ? WHERE id = ?`, [JSON.stringify(updatedPhotos), decoded.id], (err) => {
+        if (err) return res.status(500).json({ error: 'Database error.' });
+        res.json({ success: true, photos: updatedPhotos });
       });
     });
   });

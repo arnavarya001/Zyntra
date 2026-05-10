@@ -374,4 +374,25 @@
   .message-wrapper {
     max-width: 85%; /* Bubbles can be wider on small screens */
   }
+
+  .chat-header {
+    padding: 10px 16px;
+  }
+  
+  .message-input-area {
+    padding: 10px 16px;
+  }
+}
+@media (max-width: 480px) {
+  .chat-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  .chat-user-details h3 {
+    font-size: 0.95rem;
+  }
+  .message-bubble {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
 }

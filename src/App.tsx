@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Requests from './pages/Requests';
 import Profile from './pages/Profile';
+import PublicProfile from './pages/PublicProfile';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
@@ -48,6 +49,11 @@ function App() {
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/user/:id" element={
+                <ProtectedRoute>
+                  <PublicProfile />
                 </ProtectedRoute>
               } />
             </Routes>

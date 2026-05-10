@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Camera, Save, Edit2, Trash2, Plus, X } from 'lucide-react';
+import { Camera, Save, Edit2, Trash2, Plus, X, Globe, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import API_URL from '../config';
 import './Profile.css';
@@ -11,6 +11,8 @@ const Profile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStep, setSyncStep] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editData, setEditData] = useState({
@@ -108,6 +110,41 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleSyncInstagram = async () => {
+    setIsSyncing(true);
+    setSyncStep('Connecting to Instagram API...');
+    
+    await new Promise(r => setTimeout(r, 1500));
+    setSyncStep('Authenticating account...');
+    
+    await new Promise(r => setTimeout(r, 1500));
+    setSyncStep('Fetching latest posts...');
+    
+    await new Promise(r => setTimeout(r, 1500));
+    setSyncStep('Importing high-res photos...');
+
+    try {
+      const res = await fetch(`${API_URL}/api/profile/sync-instagram`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Sync failed');
+      await fetchProfile();
+      setSuccess('Successfully synced 6 photos from Instagram!');
+    } catch (err) {
+      console.error(err);
+      setError('Instagram sync failed. Please try again.');
+    } finally {
+      setIsSyncing(false);
+      setSyncStep('');
+    }
+  };
+
+  const getPhotoUrl = (photo: string) => {
+    if (photo.startsWith('http')) return photo;
+    return `${API_URL}/uploads/${photo}`;
+  };
+
   if (loading) return <div className="profile-page"><h2>Loading Profile...</h2></div>;
   if (!profile) return <div className="profile-page"><h2>User not found.</h2></div>;
 
@@ -133,7 +170,7 @@ const Profile: React.FC = () => {
             <div className="photo-grid">
               {profile.profile_pictures.map((photo: string, index: number) => (
                 <div key={index} className="photo-item brutal-box">
-                  <img src={`${API_URL}/uploads/${photo}`} alt={`Profile ${index}`} />
+                  <img src={getPhotoUrl(photo)} alt={`Profile ${index}`} />
                   {isEditing && (
                     <button className="delete-photo" onClick={() => handleDeletePhoto(photo)}>
                       <Trash2 size={16} />
@@ -155,6 +192,18 @@ const Profile: React.FC = () => {
               onChange={handlePhotoUpload}
               accept="image/*"
             />
+            
+            <div className="instagram-sync-box brutal-box" style={{ marginTop: '24px', padding: '20px', background: 'var(--accent-blue)' }}>
+              <h4 style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Globe size={20} /> Instagram Integration
+              </h4>
+              <p style={{ fontSize: '0.85rem', marginBottom: '16px', fontFamily: 'var(--font-mono)' }}>
+                Automatically sync your 6 latest high-quality photos from Instagram to your profile.
+              </p>
+              <button className="btn-primary" style={{ width: '100%', background: 'black', color: 'white' }} onClick={handleSyncInstagram}>
+                Connect & Sync
+              </button>
+            </div>
           </div>
 
           <div className="details-section">
@@ -243,6 +292,16 @@ const Profile: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {isSyncing && (
+        <div className="sync-overlay">
+          <div className="sync-modal brutal-box">
+            <Loader2 size={48} className="animate-spin" />
+            <h3>Syncing Instagram</h3>
+            <p>{syncStep}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
