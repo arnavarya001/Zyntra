@@ -72,7 +72,8 @@ if (isProduction) {
 
   db = {
     run: (sql, params, cb) => {
-      let finalSql = sql.replace(/\?/g, (_, i) => `$${i + 1}`);
+      let count = 0;
+      let finalSql = sql.replace(/\?/g, () => `$${++count}`);
       if (finalSql.trim().toUpperCase().startsWith('INSERT')) {
         finalSql += ' RETURNING id';
       }
@@ -88,7 +89,8 @@ if (isProduction) {
         });
     },
     get: (sql, params, cb) => {
-      let finalSql = sql.replace(/\?/g, (_, i) => `$${i + 1}`);
+      let count = 0;
+      let finalSql = sql.replace(/\?/g, () => `$${++count}`);
       console.log('DB GET:', finalSql, params);
       pool.query(finalSql, params)
         .then(res => cb && cb(null, res.rows[0]))
@@ -98,7 +100,8 @@ if (isProduction) {
         });
     },
     all: (sql, params, cb) => {
-      let finalSql = sql.replace(/\?/g, (_, i) => `$${i + 1}`);
+      let count = 0;
+      let finalSql = sql.replace(/\?/g, () => `$${++count}`);
       console.log('DB ALL:', finalSql, params);
       pool.query(finalSql, params)
         .then(res => cb && cb(null, res.rows))
