@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -n \"frontend,backend\" -c \"blue,yellow\" \"vite\" \"node backend/server.js\"",
     "start": "node backend/server.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

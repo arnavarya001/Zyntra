@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProfileCard from '../components/ProfileCard';
 import type { UserProfile } from '../components/ProfileCard';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,9 @@ const Discover: React.FC = () => {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [matchMessage, setMatchMessage] = useState<string | null>(null);
+  const [newRequestNotif, setNewRequestNotif] = useState<string | null>(null);
   const { token } = useAuth();
+  const prevRequestCount = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -47,6 +49,35 @@ const Discover: React.FC = () => {
     fetchUsers();
   }, [token]);
 
+  // Poll for new incoming requests and notify user
+  useEffect(() => {
+    if (!token) return;
+
+    const checkNewRequests = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/requests`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const count = data.requests?.length || 0;
+
+        if (prevRequestCount.current !== null && count > prevRequestCount.current) {
+          const diff = count - prevRequestCount.current;
+          setNewRequestNotif(`💌 ${diff} new person${diff > 1 ? 's' : ''} liked you! Check Requests.`);
+          setTimeout(() => setNewRequestNotif(null), 5000);
+        }
+        prevRequestCount.current = count;
+      } catch {
+        // silently fail
+      }
+    };
+
+    checkNewRequests();
+    const interval = setInterval(checkNewRequests, 30000);
+    return () => clearInterval(interval);
+  }, [token]);
+
   const interact = async (id: string, type: 'like' | 'skip') => {
     try {
       const res = await fetch(`${API_URL}/api/interact`, {
@@ -55,12 +86,12 @@ const Discover: React.FC = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify({ target_id: id, type })
+        body: JSON.stringify({ target_id: parseInt(id), type })
       });
       const data = await res.json();
       if (data.match) {
-        setMatchMessage("MUTUAL MATCH! Check your messages!");
-        setTimeout(() => setMatchMessage(null), 3000);
+        setMatchMessage("🎉 MUTUAL MATCH! Check your messages!");
+        setTimeout(() => setMatchMessage(null), 4000);
       }
     } catch (err) {
       console.error(err);
@@ -89,14 +120,16 @@ const Discover: React.FC = () => {
 
   return (
     <div className="discover-page">
+      {/* Match notification */}
       {matchMessage && (
-        <div style={{
-          position: 'fixed', top: '100px', zIndex: 1000, 
-          background: 'var(--accent-green)', padding: '20px', 
-          border: '3px solid black', boxShadow: '8px 8px 0px black',
-          fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 'bold'
-        }}>
+        <div className="toast-notification toast-match">
           {matchMessage}
+        </div>
+      )}
+      {/* New request notification */}
+      {newRequestNotif && (
+        <div className="toast-notification toast-request">
+          {newRequestNotif}
         </div>
       )}
       {profiles.length > 0 ? (

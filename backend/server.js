@@ -74,7 +74,8 @@ if (isProduction) {
     run: (sql, params, cb) => {
       let count = 0;
       let finalSql = sql.replace(/\?/g, () => `$${++count}`);
-      if (finalSql.trim().toUpperCase().startsWith('INSERT')) {
+      if (finalSql.trim().toUpperCase().startsWith('INSERT') && 
+          (finalSql.toLowerCase().includes('into users') || finalSql.toLowerCase().includes('into messages'))) {
         finalSql += ' RETURNING id';
       }
       console.log('DB RUN:', finalSql, params);
@@ -178,6 +179,19 @@ const initDB = async () => {
         });
       }
     }
+
+    // Ensure profile_pictures column exists (migration for older database versions)
+    if (isProduction) {
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_pictures TEXT`);
+    } else {
+      await new Promise((resolve) => {
+        db.run(`ALTER TABLE users ADD COLUMN profile_pictures TEXT`, (err) => {
+          // Ignore error if column already exists
+          resolve();
+        });
+      });
+    }
+
     console.log('All tables ready.');
   } catch (err) {
     console.error('Error initializing database:', err.message);
@@ -206,10 +220,12 @@ app.post('/api/auth/register', async (req, res) => {
     
     db.run(sql, [handle, name, ageInt, bio, gender, preference, hashedPassword], function (err) {
       if (err) {
-        if (err.message.includes('UNIQUE constraint failed')) {
+        if (err.message.includes('UNIQUE constraint failed') || 
+            err.message.includes('unique constraint') || 
+            err.code === '23505') {
           return res.status(409).json({ error: 'Handle is already taken.' });
         }
-        return res.status(500).json({ error: 'Database error.' });
+        return res.status(500).json({ error: `Database error: ${err.message}` });
       }
 
       const token = jwt.sign({ id: this.lastID, handle }, JWT_SECRET, { expiresIn: '7d' });
@@ -233,7 +249,7 @@ app.post('/api/auth/login', (req, res) => {
   }
 
   db.get(`SELECT * FROM users WHERE handle = ?`, [handle], async (err, user) => {
-    if (err) return res.status(500).json({ error: 'Database error.' });
+    if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
     if (!user) return res.status(401).json({ error: 'Invalid User ID or password.' });
 
     const match = await bcrypt.compare(password, user.password);
@@ -295,7 +311,7 @@ app.get('/api/users', (req, res) => {
       `;
 
       db.all(sql, params, (err, users) => {
-        if (err) return res.status(500).json({ error: 'Database error.' });
+        if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
         res.json({ users });
       });
     });
@@ -308,6 +324,8 @@ app.post('/api/interact', (req, res) => {
   if (!authHeader) return res.status(401).json({ error: 'No token provided.' });
 
   const { target_id, type } = req.body; // type should be 'like' or 'skip'
+  const targetId = parseInt(target_id);
+  if (isNaN(targetId)) return res.status(400).json({ error: 'Invalid target ID.' });
 
   const token = authHeader.split(' ')[1];
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
@@ -320,23 +338,23 @@ app.post('/api/interact', (req, res) => {
       ? `INSERT INTO interactions (user_id, target_id, type) VALUES (?, ?, ?) ON CONFLICT (user_id, target_id) DO NOTHING`
       : `INSERT OR IGNORE INTO interactions (user_id, target_id, type) VALUES (?, ?, ?)`;
 
-    db.run(interactSql, [userId, target_id, type], function(err) {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+    db.run(interactSql, [userId, targetId, type], function(err) {
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
 
       if (type === 'like') {
         // Check if mutual match
-        db.get(`SELECT * FROM interactions WHERE user_id = ? AND target_id = ? AND type = 'like'`, [target_id, userId], (err, mutual) => {
+        db.get(`SELECT * FROM interactions WHERE user_id = ? AND target_id = ? AND type = 'like'`, [targetId, userId], (err, mutual) => {
           if (mutual) {
             // It's a match!
-            const user1 = Math.min(userId, target_id);
-            const user2 = Math.max(userId, target_id);
+            const user1 = Math.min(userId, targetId);
+            const user2 = Math.max(userId, targetId);
             
             const matchSql = isProduction
               ? `INSERT INTO matches (user1_id, user2_id) VALUES (?, ?) ON CONFLICT (user1_id, user2_id) DO NOTHING`
               : `INSERT OR IGNORE INTO matches (user1_id, user2_id) VALUES (?, ?)`;
 
             db.run(matchSql, [user1, user2], (err) => {
-              if (err) return res.status(500).json({ error: 'Failed to create match.' });
+              if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
               return res.json({ success: true, match: true });
             });
           } else {
@@ -362,14 +380,14 @@ app.get('/api/matches', (req, res) => {
     const userId = decoded.id;
 
     const sql = `
-      SELECT u.id, u.handle, u.name, u.age, u.bio
+      SELECT u.id, u.handle, u.name, u.age, u.bio, u.profile_pictures
       FROM users u
       JOIN matches m ON (u.id = m.user1_id OR u.id = m.user2_id)
       WHERE u.id != ? AND (m.user1_id = ? OR m.user2_id = ?)
     `;
 
     db.all(sql, [userId, userId, userId], (err, matches) => {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
       res.json({ matches });
     });
   });
@@ -383,12 +401,15 @@ app.post('/api/messages', (req, res) => {
   const { receiver_id, text } = req.body;
   if (!receiver_id || !text) return res.status(400).json({ error: 'Receiver ID and text required.' });
 
+  const receiverId = parseInt(receiver_id);
+  if (isNaN(receiverId)) return res.status(400).json({ error: 'Invalid receiver ID.' });
+
   const token = authHeader.split(' ')[1];
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).json({ error: 'Invalid token.' });
     
-    db.run(`INSERT INTO messages (sender_id, receiver_id, text) VALUES (?, ?, ?)`, [decoded.id, receiver_id, text], function(err) {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+    db.run(`INSERT INTO messages (sender_id, receiver_id, text) VALUES (?, ?, ?)`, [decoded.id, receiverId, text], function(err) {
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
       res.status(201).json({ success: true, messageId: this.lastID });
     });
   });
@@ -414,7 +435,7 @@ app.get('/api/messages/:otherUserId', (req, res) => {
     `;
 
     db.all(sql, [userId, otherUserId, otherUserId, userId], (err, messages) => {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
       res.json({ messages });
     });
   });
@@ -446,7 +467,7 @@ app.get('/api/requests', (req, res) => {
     `;
 
     db.all(sql, [userId, userId, userId], (err, requests) => {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
       res.json({ requests: requests.map(r => ({
         ...r,
         profile_pictures: r.profile_pictures ? JSON.parse(r.profile_pictures) : []
@@ -509,7 +530,7 @@ app.post('/api/profile/update', (req, res) => {
 
     const sql = `UPDATE users SET name = ?, age = ?, bio = ?, gender = ?, preference = ? WHERE id = ?`;
     db.run(sql, [name, age, bio, gender, preference, decoded.id], function(err) {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
       res.json({ success: true });
     });
   });
@@ -526,13 +547,13 @@ app.post('/api/profile/upload-photo', upload.single('photo'), (req, res) => {
     if (err) return res.status(401).json({ error: 'Invalid token.' });
 
     db.get(`SELECT profile_pictures FROM users WHERE id = ?`, [decoded.id], (err, row) => {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
       
       let photos = row.profile_pictures ? JSON.parse(row.profile_pictures) : [];
       photos.push(req.file.filename);
 
       db.run(`UPDATE users SET profile_pictures = ? WHERE id = ?`, [JSON.stringify(photos), decoded.id], (err) => {
-        if (err) return res.status(500).json({ error: 'Database error.' });
+        if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
         res.json({ success: true, photos, filename: req.file.filename });
       });
     });
@@ -550,13 +571,13 @@ app.post('/api/profile/delete-photo', (req, res) => {
     if (err) return res.status(401).json({ error: 'Invalid token.' });
 
     db.get(`SELECT profile_pictures FROM users WHERE id = ?`, [decoded.id], (err, row) => {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
       
       let photos = row.profile_pictures ? JSON.parse(row.profile_pictures) : [];
       photos = photos.filter(p => p !== filename);
 
       db.run(`UPDATE users SET profile_pictures = ? WHERE id = ?`, [JSON.stringify(photos), decoded.id], (err) => {
-        if (err) return res.status(500).json({ error: 'Database error.' });
+        if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
         
         // Optionally delete the file from disk
         const filePath = path.join(__dirname, 'uploads', filename);
@@ -589,7 +610,7 @@ app.post('/api/profile/sync-instagram', (req, res) => {
     ];
 
     db.get(`SELECT profile_pictures FROM users WHERE id = ?`, [decoded.id], (err, row) => {
-      if (err) return res.status(500).json({ error: 'Database error.' });
+      if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
       if (!row) return res.status(404).json({ error: 'User not found.' });
       
       let photos = row.profile_pictures ? JSON.parse(row.profile_pictures) : [];
@@ -597,7 +618,7 @@ app.post('/api/profile/sync-instagram', (req, res) => {
       const updatedPhotos = [...new Set([...photos, ...mockPhotos])].slice(0, 6);
 
       db.run(`UPDATE users SET profile_pictures = ? WHERE id = ?`, [JSON.stringify(updatedPhotos), decoded.id], (err) => {
-        if (err) return res.status(500).json({ error: 'Database error.' });
+        if (err) return res.status(500).json({ error: `Database error: ${err.message}` });
         res.json({ success: true, photos: updatedPhotos });
       });
     });
