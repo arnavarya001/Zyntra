@@ -625,7 +625,12 @@ app.post('/api/profile/sync-instagram', (req, res) => {
   });
 });
 
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
-});
+// Only start the HTTP server when running locally (not in Vercel serverless)
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`Backend server running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
